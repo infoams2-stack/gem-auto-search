@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GeM Auto Search</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f6fa;
+            color: #222;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0,0,0,.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #174ea6;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 130px;
+            padding: 15px;
+            border: 1px solid #ccd3dd;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-top: 15px;
+            margin-right: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .search {
+            background: #174ea6;
+            color: white;
+        }
+
+        .excel {
+            background: #188038;
+            color: white;
+        }
+
+        .criteria {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f5f8ff;
+            border-radius: 10px;
+        }
+
+        .row {
+            padding: 7px 0;
+        }
+
+        .label {
+            display: inline-block;
+            width: 140px;
+            font-weight: bold;
+        }
+
+        #status {
+            margin-top: 15px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>GeM Auto Search</h1>
+
+        <p>
+            Normal Hindi/English mein apni requirement likhiye:
+        </p>
+
+        <textarea id="instruction"
+            placeholder="Example:
+20 HP laptops search karo, i5 processor,
+16GB RAM, 512GB SSD, ₹60,000 ke andar"></textarea>
+
+        <br>
+
+        <button class="search" onclick="searchProducts()">
+            🔍 Auto Search
+        </button>
+
+        <button class="excel" onclick="downloadExcel()">
+            📥 Excel
+        </button>
+
+        <div id="status"></div>
+
+        <div class="criteria" id="criteria" style="display:none;">
+            <h3>Samjhi gayi requirement</h3>
+
+            <div class="row">
+                <span class="label">Product:</span>
+                <span id="product"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Brand:</span>
+                <span id="brand"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Quantity:</span>
+                <span id="quantity"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Max Price:</span>
+                <span id="price"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">RAM:</span>
+                <span id="ram"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Storage:</span>
+                <span id="storage"></span>
+            </div>
+
+            <div class="row">
+                <span class="label">Processor:</span>
+                <span id="processor"></span>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+async function searchProducts() {
+
+    const instruction =
+        document.getElementById("instruction").value.trim();
+
+    if (!instruction) {
+        alert("Pehle requirement likhiye.");
+        return;
+    }
+
+    document.getElementById("status").innerText =
+        "Requirement samjhi ja rahi hai...";
+
+    const response = await fetch("/parse", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            instruction: instruction
+        })
+    });
+
+    const data = await response.json();
+    const c = data.criteria;
+
+    document.getElementById("criteria").style.display = "block";
+
+    document.getElementById("product").innerText =
+        c.product || "-";
+
+    document.getElementById("brand").innerText =
+        c.brand || "-";
+
+    document.getElementById("quantity").innerText =
+        c.quantity || "-";
+
+    document.getElementById("price").innerText =
+        c.max_price ? "₹" + c.max_price : "-";
+
+    document.getElementById("ram").innerText =
+        c.ram || "-";
+
+    document.getElementById("storage").innerText =
+        c.storage || "-";
+
+    document.getElementById("processor").innerText =
+        c.processor || "-";
+
+    document.getElementById("status").innerText =
+        "Requirement successfully process ho gayi.";
+}
+
+
+async function downloadExcel() {
+
+    const instruction =
+        document.getElementById("instruction").value.trim();
+
+    if (!instruction) {
+        alert("Pehle requirement likhiye.");
+        return;
+    }
+
+    const response = await fetch("/excel", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            instruction: instruction
+        })
+    });
+
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "gem_search.xlsx";
+
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    window.URL.revokeObjectURL(url);
+}
+
+</script>
+
+</body>
+</html>
