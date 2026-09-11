@@ -3,13 +3,14 @@ from gem_automation import GemAutoSearch
 
 def automatic_product_search(search_text, headless=False):
     """
-    GeM पर दिए गए product text का automatic search करता है।
+    GeM par product search karta hai aur
+    lowest detected price return karta hai.
     """
 
     gem = GemAutoSearch(headless=headless)
 
     try:
-        result = gem.search(search_text)
+        result = gem.search_lowest_price(search_text)
         return result
     finally:
         gem.close()
@@ -27,5 +28,31 @@ if __name__ == "__main__":
         print("Query:", result["query"])
         print("Title:", result["title"])
         print("URL:", result["url"])
-        print("\nSearch Page Text:\n")
-        print(result["text"])
+
+        lowest = result.get("lowest_price")
+
+        print("\n--- Lowest Price ---")
+
+        if lowest:
+            print(
+                f"Lowest Price: ₹{lowest['price']:,.2f}"
+            )
+            print(
+                "Price Text:",
+                lowest["raw"]
+            )
+        else:
+            print("Lowest price nahi mila.")
+
+        print("\n--- All Detected Prices ---")
+
+        prices = result.get("prices", [])
+
+        if prices:
+            for item in prices:
+                print(
+                    f"₹{item['price']:,.2f} | "
+                    f"{item['raw']}"
+                )
+        else:
+            print("Koi price detect nahi hua.")
